@@ -62,7 +62,11 @@ const App = () => {
     let url = 'http://127.0.0.1:8000/api/task-create/';
 
     if (editing) {
-      url = 'http://127.0.0.1:8000/api/task-update/';
+      url = `http://127.0.0.1:8000/api/task-update/${activeItem.id}/`;
+      setTodo({
+        ...todo,
+        editing: false
+      })
     }
 
     fetch(url, {
@@ -92,6 +96,39 @@ const App = () => {
     setTodo({
       activeItem: task,
       editing: true,
+    })
+  }
+
+
+  const deleteItem = (task) => {
+    let csrftoken = getCookie('csrftoken');
+
+    fetch(`http://127.0.0.1:8000/api/task-delete/${task.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      }
+    }).then(() => {
+      fetchTask()
+    })
+  }
+
+
+  const strikeUnstrike = (task) => {
+    task.completed = !task.completed
+    let csrftoken = getCookie('csrftoken');
+    let url = `http://127.0.0.1:8000/api/task-update/${task.id}/`;
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify({"completed": task.completed, "title": task.title})
+    }).then(() => {
+      fetchTask()
     })
   }
 
@@ -129,8 +166,12 @@ const App = () => {
               return (
                 <div key={index} className='task-wrapper flex-wrapper'>
 
-                  <div style={{ flex: 7 }}>
-                    <span>{task.title}</span>
+                  <div onClick={() => strikeUnstrike(task)} style={{ flex: 7 }}>
+                    {task.completed == false ? (
+                      <span>{task.title}</span>
+                    ) : (
+                      <strike>{task.title}</strike>
+                    )}
                   </div>
 
                   <div style={{ flex: 1 }}>
@@ -138,7 +179,7 @@ const App = () => {
                   </div>
 
                   <div style={{ flex: 1 }}>
-                    <button onClick={''} className="btn btn-sm btn-outline-dark delete">-</button>
+                    <button onClick={() => deleteItem(task)} className="btn btn-sm btn-outline-dark delete">-</button>
                   </div>
 
                 </div>
